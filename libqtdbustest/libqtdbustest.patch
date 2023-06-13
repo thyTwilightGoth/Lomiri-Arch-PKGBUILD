@@ -1,0 +1,225 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0133877364e0fa9c27207bd309ae26fd3686a66e..996f7cd28a00bbf09ba4f0d9c1a15b88f6fac1dc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,7 +42,7 @@ set(DBUS_SESSION_CONFIG_FILE "${CMAKE_INSTALL_FULL_DATADIR}/libqtdbustest/sessio
+ set(QTDBUSTEST_WATCHDOG_BIN "${CMAKE_INSTALL_FULL_LIBEXECDIR}/libqtdbustest/watchdog")
+ 
+ add_definitions(
+-	-std=c++11
++	-std=c++17
+ 	-fno-permissive
+ 	-pedantic
+ 	-Wall
+diff --git a/debian/libqtdbustest1.symbols b/debian/libqtdbustest1.symbols
+index 8b931c979334c1ee29991643cbdb017f1cb1412c..a7c23904c11a04ba9dcdf8608c7ad1208c794e5f 100644
+--- a/debian/libqtdbustest1.symbols
++++ b/debian/libqtdbustest1.symbols
+@@ -35,7 +35,7 @@ libqtdbustest.so.1 libqtdbustest1 #MINVER#
+  (c++)"QtDBusTest::DBusTestRunner::systemBus() const@Base" 0.1
+  (c++)"QtDBusTest::SuicidalProcess::metaObject() const@Base" 0.1
+  (c++)"QtDBusTest::QProcessDBusService::underlyingProcess() const@Base" 0.2
+- (c++)"QtDBusTest::QProcessDBusService::pid() const@Base" 0.1
++ (c++)"QtDBusTest::QProcessDBusService::processId() const@Base" 0.1
+  (c++)"typeinfo for QtDBusTest::DBusService@Base" 0.1
+  (c++)"typeinfo for QtDBusTest::DBusTestRunner@Base" 0.1
+  (c++)"typeinfo for QtDBusTest::SuicidalProcess@Base" 0.1
+diff --git a/src/libqtdbustest/CMakeLists.txt b/src/libqtdbustest/CMakeLists.txt
+index fc162aa0098b0ae796c7e5bd63b7f2104adf84c0..a06a47ef0a47a19f5439156bc5d5b6c7ee5e5ae4 100644
+--- a/src/libqtdbustest/CMakeLists.txt
++++ b/src/libqtdbustest/CMakeLists.txt
+@@ -22,11 +22,11 @@ add_library(
+ 	${QTDBUSTEST_SRC}
+ )
+ 
+-qt5_use_modules(
++target_link_libraries(
+ 	qtdbustest
+-	Core
+-	DBus
+-	Test
++	Qt5::Core
++	Qt5::DBus
++	Qt5::Test
+ )
+ 
+ set_target_properties(
+diff --git a/src/libqtdbustest/QProcessDBusService.cpp b/src/libqtdbustest/QProcessDBusService.cpp
+index c98b794d7b1b52b5870e875bde846f17b3db8a31..da3b325343968c8da7900eca7e7d9568557c06c6 100644
+--- a/src/libqtdbustest/QProcessDBusService.cpp
++++ b/src/libqtdbustest/QProcessDBusService.cpp
+@@ -94,8 +94,8 @@ void QProcessDBusService::start(const QDBusConnection &connection) {
+ 	}
+ }
+ 
+-Q_PID QProcessDBusService::pid() const {
+-	return p->m_process.pid();
++qint64 QProcessDBusService::processId() const {
++	return p->m_process.processId();
+ }
+ 
+ const QProcess & QProcessDBusService::underlyingProcess() const {
+diff --git a/src/libqtdbustest/QProcessDBusService.h b/src/libqtdbustest/QProcessDBusService.h
+index 8faa26063ddeb953f403575636cc211bf27400e3..d356445dd8d92d787d3a1bfe63520c7b5e1f26fd 100644
+--- a/src/libqtdbustest/QProcessDBusService.h
++++ b/src/libqtdbustest/QProcessDBusService.h
+@@ -40,7 +40,7 @@ public:
+ 
+ 	virtual void start(const QDBusConnection &connection);
+ 
+-	virtual Q_PID pid() const;
++	virtual qint64 processId() const;
+ 
+ 	virtual const QProcess & underlyingProcess() const;
+ 
+diff --git a/src/libqtdbustest/SuicidalProcess.cpp b/src/libqtdbustest/SuicidalProcess.cpp
+index 96fa06046b523eeacc8303b85c2f8419206072c7..6d4d8b2221c3eb1ea05be517619ca34dbdc0c1e4 100644
+--- a/src/libqtdbustest/SuicidalProcess.cpp
++++ b/src/libqtdbustest/SuicidalProcess.cpp
+@@ -51,7 +51,7 @@ SuicidalProcess::~SuicidalProcess() {
+ void SuicidalProcess::setSuicidal() {
+ 	d->m_watchdog.start(d->m_watchdogCommand,
+ 			QStringList() << QString::number(QCoreApplication::applicationPid())
+-					<< QString::number(pid()));
++					<< QString::number(processId()));
+ }
+ 
+ void SuicidalProcess::setWatchdogCommand(const QString &watchdogCommand) {
+diff --git a/src/qdbus-test-runner/CMakeLists.txt b/src/qdbus-test-runner/CMakeLists.txt
+index 19025acb26dee5780b9230e0162131dee9d3202b..ce1803630ef87f3985ccb8ae99291307e31ec823 100644
+--- a/src/qdbus-test-runner/CMakeLists.txt
++++ b/src/qdbus-test-runner/CMakeLists.txt
+@@ -9,9 +9,9 @@ target_link_libraries(
+ 	qtdbustest
+ )
+ 
+-qt5_use_modules(
++target_link_libraries(
+ 	qdbus-simple-test-runner
+-	Core
++	Qt5::Core
+ )
+ 
+ install(
+diff --git a/src/watchdog/CMakeLists.txt b/src/watchdog/CMakeLists.txt
+index cba78e4c36723018056f8139ccc08e06ef138054..772397fbb8f165dfec2a929852f50df2391519d9 100644
+--- a/src/watchdog/CMakeLists.txt
++++ b/src/watchdog/CMakeLists.txt
+@@ -5,9 +5,9 @@ add_executable(
+ 	main.cpp
+ )
+ 
+-qt5_use_modules(
++target_link_libraries(
+ 	watchdog
+-	Core
++	Qt5::Core
+ )
+ 
+ install(
+diff --git a/src/watchdog/Watchdog.cpp b/src/watchdog/Watchdog.cpp
+index b51e65b64c9480a926dd25936e762a5c9da4b7ce..8769d2cc0c8a3a8e257856a199e5b0404eca3566 100644
+--- a/src/watchdog/Watchdog.cpp
++++ b/src/watchdog/Watchdog.cpp
+@@ -23,7 +23,7 @@
+ 
+ namespace QtDBusTest {
+ 
+-Watchdog::Watchdog(Q_PID parentPid, Q_PID childPid) :
++Watchdog::Watchdog(qint64 parentPid, qint64 childPid) :
+ 		m_parentPid(parentPid), m_childPid(childPid) {
+ 	m_timer.setInterval(1000);
+ 	connect(&m_timer, SIGNAL(timeout()), this, SLOT(timeout()));
+diff --git a/src/watchdog/Watchdog.h b/src/watchdog/Watchdog.h
+index ce458ccaaff238a0dd55d1994554c4b08b9cd533..f57879e3d0d661d5391983a471602b549a49806c 100644
+--- a/src/watchdog/Watchdog.h
++++ b/src/watchdog/Watchdog.h
+@@ -28,7 +28,7 @@ namespace QtDBusTest {
+ class Q_DECL_EXPORT Watchdog: public QObject {
+ Q_OBJECT
+ public:
+-	Watchdog(Q_PID parentPid, Q_PID childPid);
++	Watchdog(qint64 parentPid, qint64 childPid);
+ 
+ 	virtual ~Watchdog();
+ 
+@@ -36,9 +36,9 @@ protected Q_SLOTS:
+ 	void timeout();
+ 
+ protected:
+-	Q_PID m_parentPid;
++	qint64 m_parentPid;
+ 
+-	Q_PID m_childPid;
++	qint64 m_childPid;
+ 
+ 	QTimer m_timer;
+ };
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index 4b0c483f4d760bddfa43cf996ec4e1e8ddbfac8c..c99a3e23adeae622fd4802d179e54358de7c963d 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -24,11 +24,11 @@ add_executable(
+ 	${UNIT_TESTS_SRC}
+ )
+ 
+-qt5_use_modules(
++target_link_libraries(
+ 	unit-tests
+-	Core
+-	DBus
+-	Test
++	Qt5::Core
++	Qt5::DBus
++	Qt5::Test
+ )
+ 
+ target_link_libraries(
+diff --git a/tests/libqtdbustest/TestDBusTestRunner.cpp b/tests/libqtdbustest/TestDBusTestRunner.cpp
+index beaabbba8ff5de83b6dbe27ea9d68972b162c201..871913088977734fa7eec559677c195b45c7fc01 100644
+--- a/tests/libqtdbustest/TestDBusTestRunner.cpp
++++ b/tests/libqtdbustest/TestDBusTestRunner.cpp
+@@ -54,7 +54,7 @@ TEST_F(TestDBusTestRunner, StartsSessionService) {
+ 	QProcess pgrep;
+ 	pgrep.start("ps",
+ 			QStringList() << "--no-headers" << "--pid"
+-					<< QString::number(process->pid()) << "-o" << "args");
++					<< QString::number(process->processId()) << "-o" << "args");
+ 	pgrep.waitForFinished();
+ 	pgrep.waitForReadyRead();
+ 
+@@ -77,7 +77,7 @@ TEST_F(TestDBusTestRunner, StartsSystemService) {
+ 	QProcess pgrep;
+ 	pgrep.start("ps",
+ 			QStringList() << "--no-headers" << "--pid"
+-					<< QString::number(process->pid()) << "-o" << "args");
++					<< QString::number(process->processId()) << "-o" << "args");
+ 	pgrep.waitForFinished();
+ 	pgrep.waitForReadyRead();
+ 
+diff --git a/tests/libqtdbustest/TestQProcessDBusService.cpp b/tests/libqtdbustest/TestQProcessDBusService.cpp
+index e41462a9c1fd8083f74a864b2ba9cf003338afcf..8a91e591d9c5624b3fec5c21ba0a4174b7f40717 100644
+--- a/tests/libqtdbustest/TestQProcessDBusService.cpp
++++ b/tests/libqtdbustest/TestQProcessDBusService.cpp
+@@ -54,7 +54,7 @@ TEST_F(TestQProcessDBusService, WaitsForServiceAppeared) {
+ 	QProcess pgrep;
+ 	pgrep.start("ps",
+ 			QStringList() << "--no-headers" << "--pid"
+-					<< QString::number(process.pid()) << "-o" << "args");
++					<< QString::number(process.processId()) << "-o" << "args");
+ 	pgrep.waitForFinished();
+ 	pgrep.waitForReadyRead();
+ 
+diff --git a/tests/libqtdbustest/TestSuicidalProcess.cpp b/tests/libqtdbustest/TestSuicidalProcess.cpp
+index 0efc67e9e7aa03adcbb94dadf46cf9e95276bbb1..c4c6c5d1b4ae552e7514ffe3b6e5f535be36fbb9 100644
+--- a/tests/libqtdbustest/TestSuicidalProcess.cpp
++++ b/tests/libqtdbustest/TestSuicidalProcess.cpp
+@@ -47,7 +47,7 @@ TEST_F(TestSuicidalProcess, BehavesLikeNormalQProcess) {
+ 	QProcess pgrep;
+ 	pgrep.start("ps",
+ 			QStringList() << "--no-headers" << "--pid"
+-					<< QString::number(process.pid()) << "-o" << "args");
++					<< QString::number(process.processId()) << "-o" << "args");
+ 	pgrep.waitForFinished();
+ 	pgrep.waitForReadyRead();
+ 
