@@ -8,19 +8,46 @@ url='https://gitlab.com/ubports/development/core/libqtdbustest'
 arch=(x86_64 aarch64)
 license=(GPL)
 depends=(gcovr gettext gtest lcov pkgconf qt5-base python-dbusmock dbus)
-makedepends=(cmake cmake-extras gcovr gettext gtest lcov pkgconf qt5-base python-dbusmock dbus git)
+makedepends=(cmake cmake-extras gcovr gettext gtest lcov pkgconf qt5-base python-dbusmock dbus sed)
 optdepends=()
-source=("https://gitlab.com/ubports/development/core/libqtdbustest/-/archive/$pkgver/libqtdbustest-$pkgver.tar.gz"
-        'libqtdbustest.patch')
-sha512sum=('14b41914f09543803d0f9b8d4cbe9e7551e0f5c82f337931bc632952c8a14912347790d90aaf9efb2d96ab0e60620e98e81cfc9c17b9896e10b23edcbc9337f7'
-           '5d2c4e5273a1bc95449cc18a3a141ea9fc67674bd953c90fb0173a0e9f3869569ffa8e8598fd23b345bb232e4633c755f82f9db563acbb9c01b45a7d12eb4842')
+source=("https://gitlab.com/ubports/development/core/libqtdbustest/-/archive/$pkgver/libqtdbustest-$pkgver.tar.gz")
+sha512sums=('14b41914f09543803d0f9b8d4cbe9e7551e0f5c82f337931bc632952c8a14912347790d90aaf9efb2d96ab0e60620e98e81cfc9c17b9896e10b23edcbc9337f7')
 
 BUILD_DIR=build
 
+#prepare() {
+#    git apply -v ../libqtdbustest.patch
+#}
+
 build() {
-    cp libqtdbustest.patch $pkgname-$pkgver/
+    #cp libqtdbustest.patch $pkgname-$pkgver/
     cd $pkgname-$pkgver
-    git apply -v libqtdbustest.patch
+    sed -i '45s/-std=c++11/-std=c++17/' CMakeLists.txt
+    sed -i '38s/(c++)"QtDBusTest::QProcessDBusService::pid() const@Base" 0.1/(c++)"QtDBusTest::QProcessDBusService::processId() const@Base" 0.1/' debian/libqtdbustest1.symbols
+    sed -i '25s/qt5_use_modules(/target_link_libraries(/' src/libqtdbustest/CMakeLists.txt
+    sed -i '27s/Core/Qt5::Core/' src/libqtdbustest/CMakeLists.txt
+    sed -i '28s/DBus/Qt5::DBus/' src/libqtdbustest/CMakeLists.txt
+    sed -i '29s/Test/Qt5::Test/' src/libqtdbustest/CMakeLists.txt
+    sed -i '97s/Q_PID QProcessDBusService::pid() const {/qint64 QProcessDBusService::processId() const {/' src/libqtdbustest/QProcessDBusService.cpp
+    sed -i '98s/return p->m_process.pid();/return p->m_process.processId();/' src/libqtdbustest/QProcessDBusService.cpp
+    sed -i '43s/virtual Q_PID pid() const;/virtual qint64 processId() const;/' src/libqtdbustest/QProcessDBusService.h
+    sed -i '54s/<< QString::number(pid()));/<< QString::number(processId()));/' src/libqtdbustest/SuicidalProcess.cpp
+    sed -i '12s/qt5_use_modules(/target_link_libraries(/' src/qdbus-test-runner/CMakeLists.txt
+    sed -i '14s/Core/Qt5::Core/' src/qdbus-test-runner/CMakeLists.txt
+    sed -i '8s/qt5_use_modules(/target_link_libraries(/' src/watchdog/CMakeLists.txt
+    sed -i '10s/Core/Qt5::Core/' src/watchdog/CMakeLists.txt
+    sed -i '26s/Watchdog::Watchdog(Q_PID parentPid, Q_PID childPid) :/Watchdog::Watchdog(qint64 parentPid, qint64 childPid) :/' src/watchdog/Watchdog.cpp
+    sed -i '31s/Watchdog(Q_PID parentPid, Q_PID childPid);/Watchdog(qint64 parentPid, qint64 childPid);/' src/watchdog/Watchdog.h
+    sed -i '39s/Q_PID m_parentPid;/qint64 m_parentPid;/' src/watchdog/Watchdog.h
+    sed -i '41s/Q_PID m_childPid;/qint64 m_childPid;/' src/watchdog/Watchdog.h
+    sed -i '27s/qt5_use_modules(/target_link_libraries(/' tests/CMakeLists.txt
+    sed -i '29s/Core/Qt5::Core/' tests/CMakeLists.txt
+    sed -i '30s/DBus/Qt5::DBus/' tests/CMakeLists.txt
+    sed -i '31s/Test/Qt5::Test/' tests/CMakeLists.txt
+    sed -i '57s/<< QString::number(process->pid()) << "-o" << "args");/<< QString::number(process->processId()) << "-o" << "args");/' tests/libqtdbustest/TestDBusTestRunner.cpp
+    sed -i '80s/<< QString::number(process->pid()) << "-o" << "args");/<< QString::number(process->processId()) << "-o" << "args");/' tests/libqtdbustest/TestDBusTestRunner.cpp
+    sed -i '57s/<< QString::number(process.pid()) << "-o" << "args");/<< QString::number(process.processId()) << "-o" << "args");/' tests/libqtdbustest/TestQProcessDBusService.cpp
+    sed -i '50s/<< QString::number(process.pid()) << "-o" << "args");/<< QString::number(process.processId()) << "-o" << "args");/' tests/libqtdbustest/TestSuicidalProcess.cpp
     mkdir -p $BUILD_DIR
     cd $BUILD_DIR
     cmake .. -Wno-dev
@@ -31,5 +58,3 @@ package() {
     cd $pkgname-$pkgver/$BUILD_DIR
     make DESTDIR="${pkgdir}/" install
 }
-sha256sums=('9cdca6c83a4f6014680f9fdd85ec248bf0d660fba962ab710e4a0683c6a6ff12'
-            '4d2d3aaea7bd92ebe56ab7ed00dbbab4f7686e34e09ee37438393284f6741ed7')
