@@ -1,1 +1,33 @@
-#Initial Commit
+# Maintainer: thyTwilightGoth <https://aur.archlinux.org/account/thyTwilightGoth>
+
+pkgname=libqtdbustest
+pkgver=0.3.0
+pkgrel=1
+pkgdesc="A simple library to create a private DBus environment for your test fixtures"
+url='https://gitlab.com/ubports/development/core/libqtdbustest'
+arch=(x86_64 aarch64)
+license=(GPL)
+depends=(gcovr gettext gtest lcov pkgconf qt5-base python-dbusmock dbus)
+makedepends=(cmake cmake-extras gcovr gettext gtest lcov pkgconf qt5-base python-dbusmock dbus git)
+optdepends=()
+source=("https://gitlab.com/ubports/development/core/libqtdbustest/-/archive/$pkgver/libqtdbustest-$pkgver.tar.gz"
+        'libqtdbustest.patch')
+sha512sum=('14b41914f09543803d0f9b8d4cbe9e7551e0f5c82f337931bc632952c8a14912347790d90aaf9efb2d96ab0e60620e98e81cfc9c17b9896e10b23edcbc9337f7'
+           '5d2c4e5273a1bc95449cc18a3a141ea9fc67674bd953c90fb0173a0e9f3869569ffa8e8598fd23b345bb232e4633c755f82f9db563acbb9c01b45a7d12eb4842')
+
+BUILD_DIR=build
+
+build() {
+    cp libqtdbustest.patch $pkgname-$pkgver/
+    cd $pkgname-$pkgver
+    git apply -v libqtdbustest.patch
+    mkdir -p $BUILD_DIR
+    cd $BUILD_DIR
+    cmake .. -Wno-dev
+    make
+}
+
+package() {
+    cd $pkgname-$pkgver/$BUILD_DIR
+    make DESTDIR="${pkgdir}/" install
+}
