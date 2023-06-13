@@ -31,3 +31,5 @@ package() {
     cd $pkgname-$pkgver/$BUILD_DIR
     make DESTDIR="${pkgdir}/" install
 }
+sha256sums=('9cdca6c83a4f6014680f9fdd85ec248bf0d660fba962ab710e4a0683c6a6ff12'
+            '4d2d3aaea7bd92ebe56ab7ed00dbbab4f7686e34e09ee37438393284f6741ed7')
