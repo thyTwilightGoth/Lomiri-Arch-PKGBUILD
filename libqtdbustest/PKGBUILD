@@ -50,7 +50,8 @@ build() {
     sed -i '50s/<< QString::number(process.pid()) << "-o" << "args");/<< QString::number(process.processId()) << "-o" << "args");/' tests/libqtdbustest/TestSuicidalProcess.cpp
     mkdir -p $BUILD_DIR
     cd $BUILD_DIR
-    cmake .. -Wno-dev
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_INSTALL_LIBDIR="lib/" -Wno-dev ..
+    #cmake .. -Wno-dev
     make
 }
 
