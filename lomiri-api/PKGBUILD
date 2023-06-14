@@ -1,1 +1,33 @@
-#Initial Push
+# Maintainer: thyTwilightGoth <https://aur.archlinux.org/account/thyTwilightGoth>
+
+pkgname=lomiri-api
+pkgver=0.2.1
+pkgrel=1
+pkgdesc='The API for the Lomiri Desktop Enviroment'
+url='https://gitlab.com/ubports/development/core/lomiri-api'
+arch=(x86_64 aarch64)
+license=(GPL)
+depends=(glib2 gcc-libs)
+makedepends=(cmake cmake-extras dbus-test-runner lsb-release doxygen graphviz glib2 gtest pkgconf python qt5-base qt5-declarative qt5-quickcontrols2 symlinks rdfind libqtdbustest)
+source=("https://gitlab.com/ubports/development/core/lomiri-api/-/archive/$pkgver/$pkgname-$pkgver.tar.gz")
+sha512sums=('9eb356d6733a780aabb8e8dde412c0aafca5dd021e1b093f5b369c778da0c0ae933e0a8f527528a85ae989d1856f8a3691117bacda1829716dadf253852ffb96')
+
+BUILD_DIR=build
+
+prepare() {
+    cd $pkgname-$pkgver
+    sed '26 a\ #include <cstdint> \n' include/lomiri/util/FileIO.h
+    sed '24 a\ #include <stdexcept> \n' include/lomiri/util/ResourcePtr.h
+    mkdir -p $BUILD_DIR
+}
+
+build() {
+    cd $pkgname-$pkgver/$BUILD_DIR
+    cmake ..
+    make
+}
+
+package() {
+    cd $pkgname-$pkgver/$BUILD_DIR
+    make DESTDIR="${pkgdir}/" install
+}
