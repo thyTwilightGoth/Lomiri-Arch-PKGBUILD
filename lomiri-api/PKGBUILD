@@ -16,14 +16,15 @@ BUILD_DIR=build
 
 prepare() {
     cd $pkgname-$pkgver
-    sed '26 a\ #include <cstdint> \n' include/lomiri/util/FileIO.h
-    sed '24 a\ #include <stdexcept> \n' include/lomiri/util/ResourcePtr.h
+    sed -i '26 a\#include <cstdint> \n' include/lomiri/util/FileIO.h
+    sed -i '24 a\#include <stdexcept> \n' include/lomiri/util/ResourcePtr.h
     mkdir -p $BUILD_DIR
 }
 
 build() {
     cd $pkgname-$pkgver/$BUILD_DIR
-    cmake ..
+    #cmake ..
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_INSTALL_LIBDIR="lib/" ..
     make
 }
 
