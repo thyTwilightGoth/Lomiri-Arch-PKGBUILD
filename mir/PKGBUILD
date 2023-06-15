@@ -3,21 +3,21 @@
 # Contributor: kikadf <kikadf.01@gmail.com>
 
 pkgname=mir
-pkgver=2.10.0
-pkgrel=2
+pkgver=2.13.0
+pkgrel=1
 pkgdesc="Canonical's display server"
 url='https://mir-server.io'
 arch=(x86_64 i686)
 license=(GPL LGPL)
-depends=(gtest boost-libs capnproto google-glog gflags libglvnd  liburcu lttng-ust libepoxy libxml++2.6 nettle libinput libxkbcommon python-pillow freetype2 libevdev protobuf python-dbus python-gobject hicolor-icon-theme libxcursor yaml-cpp)
-makedepends=(git glm doxygen cmake boost gcovr gmock lcov valgrind python-dbusmock umockdev wlcs)
+depends=(gtest boost-libs google-glog gflags libglvnd  liburcu lttng-ust libepoxy libxml++2.6 nettle libinput libxkbcommon python-pillow freetype2 libevdev python-dbus python-gobject hicolor-icon-theme libxcursor yaml-cpp)
+makedepends=(eglexternalplatform git boost libpcap libdrm mesa libepoxy freetype2 glm google-glog gtest libinput lttng-ust egl-wayland systemd-libs umockdev wayland libxcb libx11 libxcursor libxkbcommon libxkbcommon-x11 libxml++2.6 libyaml nettle python-pillow yaml-cpp wlcs)
 optdepends=('qterminal: required for miral demos'
             'ttf-ubuntu-font-family: required for miral demos'
             'qt5-wayland: required for miral demos'
             'xcursor-dmz: opt requirement for miral demos'
             'qtubuntu: opt requirement for miral demos')
 source=("https://github.com/MirServer/mir/archive/v${pkgver}.tar.gz")
-sha256sums=('242370eb99286473ffd4be60d4b9ea3f4b92d2399c0c1ed2591c2d2b661e3302')
+sha512sums=('9f9da217e3bdd16e57824ca92abdf428fbec451a2fd8eb5e9fff5acf9df4714eb404e3f26628b4ab4428c18c33ee35bb910c097d764880ecea3fb4cd01d875f6')
 
 BUILD_DIR=build
 
@@ -25,8 +25,8 @@ build() {
   cd ${pkgname}-${pkgver}
   mkdir -p ${BUILD_DIR}
   cd ${BUILD_DIR}
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_INSTALL_LIBDIR="lib/" ..
-  cmake --build ./
+  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_INSTALL_LIBDIR="lib/" -DMIR_PLATFORM='gbm-kms;eglstream-kms;x11;wayland' ..
+  make
 }
 
 package() {
